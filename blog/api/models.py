@@ -25,3 +25,21 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['created']
+
+
+class SimplePost(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=100, blank=True, default='')
+    body = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['created']
+
+
+class SimpleComment(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    body = models.TextField(blank=False)
+    post = models.ForeignKey(SimplePost, related_name='comments', on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['created']
