@@ -20,18 +20,31 @@ class PostTestCase(APITestCase):
 
     @skip
     def test_posts_list(self):
-        url = reverse('v1_posts')
+        url = reverse('v2_posts-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        result = response.json()
-        posts = result.get('posts')
+        posts = response.json()
         self.assertEqual(len(posts), 2)
 
-    # @skip
+    @skip
     def test_create_post(self):
-        url = reverse('v1_posts')
+        url = reverse('v2_posts-list')
         response = self.client.post(url, {
             'title': 'test_title',
             'body': 'test_body'
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @skip
+    def test_get_post(self):
+        url = reverse('v3_posts-detail', kwargs={
+            'pk': self.post_1.pk
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def test_get_last_post(self):
+        url = reverse('v3_posts-last-post')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
