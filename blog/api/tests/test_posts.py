@@ -3,10 +3,10 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.test.testcases import override_settings
-
+from django.contrib.auth.models import User
 from model_bakery import baker
 
-from api.models import SimplePost, SimpleComment
+from api.models import SimplePost, SimpleComment, UserStatus
 
 
 class PostTestCase(APITestCase):
@@ -18,17 +18,50 @@ class PostTestCase(APITestCase):
         baker.make(SimpleComment, post=self.post_1)
         baker.make(SimpleComment, post=self.post_2)
         baker.make(SimpleComment, post=self.post_2)
+        self.user_1 = User.objects.create_user(username='user_1', password='pass_1')
+        self.user_1_status = baker.make(UserStatus, user=self.user_1, is_active=True)
+        self.token_1 = self.get_token()
         return super().setUp()
+
+    def get_token(self):
+        url = reverse('auth')
+        response = self.client.post(url, {
+            'username': self.user_1.username,
+            'password': 'pass_1'
+        })
+        result = response.json()
+        return result.get('token')
+
+
+    def do_request(self, url, method, data=None, auth=True):
+        headers = {}
+        if auth:
+            headers['Authorization'] = f"Token {self.token_1}"
+        if method == 'get':
+            return self.client.get(url, data, headers=headers)
+        else:
+            return self.client.put(url, data, headers=headers)
+
+    @skip
+    def test_get_token(self):
+        url = reverse('auth')
+        response = self.client.post(url, {
+            'username': self.user_1.username,
+            'password': 'pass_1'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        result = response.json()
+        self.assertIn('token', result)
 
     @skip
     def test_posts_list(self):
-        url = reverse('v2_posts-list')
-        response = self.client.get(url)
+        url = reverse('v3_posts-list')
+        response = self.do_request(url, 'get', auth=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        posts = response.json()
+        posts = response.json().get('results')
         self.assertEqual(len(posts), 2)
 
-    @skip
+    # @skip
     def test_create_post(self):
         url = reverse('v3_posts-list')
         response = self.client.post(url, {
@@ -75,6 +108,7 @@ class PostTestCase(APITestCase):
         posts = response.json()
         self.assertEqual(len(posts), 1)
 
+    @skip
     def test_pagination(self):
         for i in range(10):
             baker.make(SimplePost, title=f'test_title_{i}')

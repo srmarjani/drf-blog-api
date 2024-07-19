@@ -1,4 +1,9 @@
 from django.db import models
+from django.contrib.auth.models import User
+
+class UserStatus(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
 
 class Category(models.Model):
     name = models.CharField(max_length=100, blank=False, default='')
@@ -32,6 +37,7 @@ class SimplePost(models.Model):
     title = models.CharField(max_length=100, blank=True, default='')
     body = models.TextField(blank=True, default='')
     like = models.PositiveIntegerField(default=0)
+    author = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['created']
