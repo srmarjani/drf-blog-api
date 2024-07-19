@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.throttling import UserRateThrottle
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination, CursorPagination
 
 from api.models import SimplePost
 from api.serializers import SimplePostSerializer
@@ -21,6 +23,11 @@ class SimplePostViewSet(
     filterset_class = SimplePostFilter
     search_fields = ['title', 'body']
     ordering_fields = ['title', 'created']
+    ordering = ['-created']
+    # throttle_classes = [UserRateThrottle]
+    # throttle_scope = 'contacts'
+    # pagination_class = PageNumberPagination
+
 
 
     @action(methods=['get'], detail=False)

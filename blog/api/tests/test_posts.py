@@ -2,10 +2,12 @@ from unittest import skip
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.test.testcases import override_settings
 
 from model_bakery import baker
 
 from api.models import SimplePost, SimpleComment
+
 
 class PostTestCase(APITestCase):
 
@@ -72,3 +74,21 @@ class PostTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         posts = response.json()
         self.assertEqual(len(posts), 1)
+
+    def test_pagination(self):
+        for i in range(10):
+            baker.make(SimplePost, title=f'test_title_{i}')
+
+        url = reverse('v3_posts-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        page_1_posts = response.json()
+        page_1_posts_ids = [item.get('id') for item in page_1_posts.get('results')]
+        next_url = page_1_posts.get('next')
+        baker.make(SimplePost, title=f'test_title_1000')
+        response = self.client.get(next_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        page_2_posts = response.json()
+        page_2_posts_ids = [item.get('id') for item in page_2_posts.get('results')]
+        common_ids = list(set(page_1_posts_ids).intersection(list(page_2_posts_ids)))
+        self.assertEqual(len(common_ids), 0)
