@@ -10,8 +10,8 @@ from api.models import SimplePost, SimpleComment
 class PostTestCase(APITestCase):
 
     def setUp(self) -> None:
-        self.post_1 = baker.make(SimplePost, title='test_title_1', body='test_body_1')
-        self.post_2 = baker.make(SimplePost, title='test_title_2', body='test_body_2')
+        self.post_1 = baker.make(SimplePost, title='test_title_1', body='test_body_1', like=10)
+        self.post_2 = baker.make(SimplePost, title='test_title_2', body='test_body_2', like=20)
         baker.make(SimpleComment, post=self.post_1)
         baker.make(SimpleComment, post=self.post_1)
         baker.make(SimpleComment, post=self.post_2)
@@ -28,7 +28,7 @@ class PostTestCase(APITestCase):
 
     @skip
     def test_create_post(self):
-        url = reverse('v2_posts-list')
+        url = reverse('v3_posts-list')
         response = self.client.post(url, {
             'title': 'test_title',
             'body': 'test_body'
@@ -43,8 +43,32 @@ class PostTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
+    @skip
     def test_get_last_post(self):
         url = reverse('v3_posts-last-post')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @skip
+    def test_filter_title_post(self):
+        url = reverse('v3_posts-list')
+        response = self.client.get(url, data={'title': 'test_title_1'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        posts = response.json()
+        self.assertEqual(len(posts), 1)
+
+    @skip
+    def test_filter_like_post(self):
+        url = reverse('v3_posts-list')
+        response = self.client.get(url, data={'like__gt': 11})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        posts = response.json()
+        self.assertEqual(len(posts), 1)
+
+    @skip
+    def test_search_post(self):
+        url = reverse('v3_posts-list')
+        response = self.client.get(url, data={'search': 'body_2'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        posts = response.json()
+        self.assertEqual(len(posts), 1)
